@@ -1,0 +1,21 @@
+[mongo1]
+mongo1 ansible_host=172.16.137.82
+
+[mongo2]
+mongo2 ansible_host=172.16.137.83
+
+[mongo3]
+mongo3 ansible_host=172.16.137.84
+
+[node-exporters:children]
+mongo1
+mongo2
+mongo3
+
+[prom-server:children]
+mongo1
+
+[mongo-hosts:children]
+mongo1
+mongo2
+mongo3

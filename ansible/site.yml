@@ -1,0 +1,19 @@
+- hosts: node-exporters
+  become: yes
+  roles:
+  - role: common-utils
+  - role: prometheus/node_exporter
+
+- hosts: mongo-hosts
+  become: yes
+  roles:
+  - role: mongodb
+  - role: docker-io
+  - role: percona-mongodb-exporter-container
+
+- hosts: prom-server
+  become: yes
+  roles:
+  - role: docker-io
+  - role: prometheus/prometheus-container
+  - role: grafana-container

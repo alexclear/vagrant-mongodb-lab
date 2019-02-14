@@ -1,0 +1,263 @@
+use_percona_mongodb: True
+ext_prometheus_data_volume: /var/lib/docker-extvols/prometheus/data
+ext_prometheus_config_volume: /var/lib/docker-extvols/prometheus/config
+grafana_admin_user: test
+grafana_admin_password: aed9xaePha
+grafana_enable_internal_metrics: True
+grafana_prometheus_address: 172.16.137.82
+grafana_auto_prometheus_config: True
+grafana_auto_dashboards_config: True
+prometheus_jobs:
+  - name: nodes
+    metrics_path: "/metrics"
+    targets:
+      - host: 172.16.137.82
+        port: 9100
+      - host: 172.16.137.83
+        port: 9100
+      - host: 172.16.137.84
+        port: 9100
+grafana_dashboards_grafonnet:
+  - file_name: mongodbwt
+    dashboard_name: "WiredTiger Transactions (prod)"
+    time_from: "now-1h"
+    refresh: "30s"
+    tags:
+      - mongodb
+      - prod
+    templates:
+      - name: "instance"
+        query: 'label_values(mongodb_mongod_wiredtiger_transactions_total{job="mongosprod"}, instance)'
+        label: "Instance"
+        includeAll: "false"
+    panels:
+      - name: "MongoDB version"
+        type: "singlestat"
+        value_name: "name"
+        color_value: "true"
+        gridpos_x: 0
+        gridpos_y: 0
+        gridpos_w: 8
+        gridpos_h: 2
+        targets:
+          - expr: 'mongodb_mongod_version_info{instance="$instance", job="mongosprod"}'
+            legend_format: !unsafe "{{mongodb}}"
+            format: 'time_series'
+            interval_factor: 2
+      - name: "Effective instance name"
+        type: "singlestat"
+        value_name: "name"
+        color_value: "true"
+        gridpos_x: 8
+        gridpos_y: 0
+        gridpos_w: 8
+        gridpos_h: 2
+        targets:
+          - expr: 'mongodb_mongod_replset_my_name{instance="$instance", job="mongosprod"}'
+            legend_format: !unsafe "{{name}}"
+            format: 'time_series'
+            interval_factor: 2
+      - name: "Primary (1)/secondary (>1)"
+        type: "singlestat"
+        value_name: "avg"
+        color_value: "true"
+        gridpos_x: 16
+        gridpos_y: 0
+        gridpos_w: 8
+        gridpos_h: 2
+        targets:
+          - expr: 'mongodb_mongod_replset_my_state{instance="$instance", job="mongosprod"}'
+            legend_format: !unsafe "state"
+            format: 'time_series'
+            interval_factor: 2
+      - name: "WT transactions on $instance"
+        type: "graph"
+        stack: "true"
+        fill: 10
+        format: "none"
+        decimals: "null"
+        span: 6
+        gridpos_x: 0
+        gridpos_y: 1
+        gridpos_w: 24
+        gridpos_h: 10
+        min: 0
+        max: "null"
+        alias_colors: "{}"
+        linewidth: 1
+        targets:
+          - expr: 'irate(mongodb_mongod_wiredtiger_transactions_total{instance="$instance", job="mongosprod"}[5m])'
+            legend_format: !unsafe "{{type}}"
+            format: 'time_series'
+            interval_factor: 2
+  - file_name: mongodbdocs
+    dashboard_name: "Document access/modification patterns (prod)"
+    time_from: "now-1h"
+    refresh: "30s"
+    tags:
+      - mongodb
+      - prod
+    templates:
+      - name: "instance"
+        query: 'label_values(mongodb_mongod_metrics_document_total{job="mongosprod"}, instance)'
+        label: "Instance"
+        includeAll: "false"
+    panels:
+      - name: "Document metrics on $instance"
+        type: "graph"
+        stack: "true"
+        fill: 10
+        format: "short"
+        decimals: "null"
+        span: 6
+        gridpos_x: 0
+        gridpos_y: 0
+        gridpos_w: 24
+        gridpos_h: 10
+        min: 0
+        max: "null"
+        alias_colors: "{}"
+        linewidth: 1
+        targets:
+          - expr: 'irate(mongodb_mongod_metrics_document_total{instance="$instance", job="mongosprod"}[5m])'
+            legend_format: !unsafe "{{state}}"
+            format: 'time_series'
+            interval_factor: 2
+  - file_name: mongodbops
+    dashboard_name: "Opcounters (prod)"
+    time_from: "now-1h"
+    refresh: "30s"
+    tags:
+      - mongodb
+      - prod
+    templates:
+      - name: "instance"
+        query: 'label_values(mongodb_mongod_op_counters_total{job="mongosprod"}, instance)'
+        label: "Instance"
+        includeAll: "false"
+    panels:
+      - name: "Op counters on $instance"
+        type: "graph"
+        stack: "true"
+        fill: 10
+        format: "short"
+        decimals: "null"
+        span: 6
+        gridpos_x: 0
+        gridpos_y: 0
+        gridpos_w: 24
+        gridpos_h: 10
+        min: 0
+        max: "null"
+        alias_colors: "{}"
+        linewidth: 1
+        targets:
+          - expr: 'irate(mongodb_mongod_op_counters_total{instance="$instance", job="mongosprod"}[5m])'
+            legend_format: !unsafe "{{type}}"
+            format: 'time_series'
+            interval_factor: 2
+  - file_name: mongodbobjs
+    dashboard_name: "Number of objects (prod)"
+    time_from: "now-1h"
+    refresh: "30s"
+    tags:
+      - mongodb
+      - prod
+    templates:
+      - name: "instance"
+        query: 'label_values(mongodb_mongod_db_objects_total{job="mongosprod"}, instance)'
+        label: "Instance"
+        includeAll: "false"
+    panels:
+      - name: "Objects in the DB on $instance"
+        type: "graph"
+        stack: "true"
+        fill: 10
+        format: "short"
+        decimals: "null"
+        span: 6
+        gridpos_x: 0
+        gridpos_y: 0
+        gridpos_w: 24
+        gridpos_h: 10
+        min: 0
+        max: "null"
+        alias_colors: "{}"
+        linewidth: 1
+        targets:
+          - expr: 'mongodb_mongod_db_objects_total{instance="$instance", job="mongosprod"}'
+            legend_format: !unsafe "{{db}}"
+            format: 'time_series'
+            interval_factor: 2
+  - file_name: mongodbpingrepl
+    dashboard_name: "Replset members ping (prod)"
+    time_from: "now-1h"
+    refresh: "30s"
+    tags:
+      - mongodb
+      - prod
+    templates:
+      - name: "instance"
+        query: 'label_values(mongodb_mongod_replset_member_ping_ms{job="mongosprod"}, instance)'
+        label: "Instance"
+        includeAll: "false"
+    panels:
+      - name: "MongoDB version"
+        type: "singlestat"
+        value_name: "name"
+        color_value: "true"
+        gridpos_x: 0
+        gridpos_y: 0
+        gridpos_w: 8
+        gridpos_h: 2
+        targets:
+          - expr: 'mongodb_mongod_version_info{instance="$instance", job="mongosprod"}'
+            legend_format: !unsafe "{{mongodb}}"
+            format: 'time_series'
+            interval_factor: 2
+      - name: "Effective instance name"
+        type: "singlestat"
+        value_name: "name"
+        color_value: "true"
+        gridpos_x: 8
+        gridpos_y: 0
+        gridpos_w: 8
+        gridpos_h: 2
+        targets:
+          - expr: 'mongodb_mongod_replset_my_name{instance="$instance", job="mongosprod"}'
+            legend_format: !unsafe "{{name}}"
+            format: 'time_series'
+            interval_factor: 2
+      - name: "Primary (1)/secondary (>1)"
+        type: "singlestat"
+        value_name: "avg"
+        color_value: "true"
+        gridpos_x: 16
+        gridpos_y: 0
+        gridpos_w: 8
+        gridpos_h: 2
+        targets:
+          - expr: 'mongodb_mongod_replset_my_state{instance="$instance", job="mongosprod"}'
+            legend_format: !unsafe "state"
+            format: 'time_series'
+            interval_factor: 2
+      - name: "Ping metrics on $instance"
+        type: "graph"
+        stack: "false"
+        fill: 0
+        format: "ms"
+        decimals: "null"
+        span: 6
+        gridpos_x: 0
+        gridpos_y: 1
+        gridpos_w: 24
+        gridpos_h: 10
+        min: 0
+        max: "null"
+        alias_colors: "{}"
+        linewidth: 2
+        targets:
+          - expr: 'mongodb_mongod_replset_member_ping_ms{instance="$instance", job="mongosprod"}'
+            legend_format: !unsafe "{{name}}"
+            format: 'time_series'
+            interval_factor: 2
